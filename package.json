@@ -14,6 +14,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/cli.ts",
+    "demo": "tsx scripts/demo.ts",
+    "demo:visual": "tsx scripts/visual-demo.ts",
+    "emulate": "tsx src/cli.ts emulate",
     "serve": "tsx src/cli.ts serve",
     "run:agent": "tsx src/cli.ts run",
     "test": "vitest run",

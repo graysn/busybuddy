@@ -56,7 +56,41 @@ busybuddy run
 ```
 
 Try it **without a device** first — `busybuddy run --dry-run` prints an ASCII
-preview of the two cards instead of drawing to hardware.
+preview of the two cards instead of drawing to hardware. Even quicker, run the
+built-in demo, which starts a relay and two dry-run agents in one process and
+plays out a short scene (recording, Pomodoro, meeting, LED alerts):
+
+```bash
+npm run demo
+```
+
+## Emulator (no hardware)
+
+Don't have two bars — or any bar? Run the built-in emulator, a local server that
+speaks the real BUSY Bar HTTP API and renders the 72×16 screen in your browser.
+Point an agent's `bar.addr` at it exactly like a physical device.
+
+```bash
+# one command spins up two emulators + relay + two agents and loops a scene:
+npm run demo:visual
+# → open the two printed URLs (http://127.0.0.1:10420 and :10421) side by side
+```
+
+Or run an emulator on its own and drive it like real hardware:
+
+```bash
+npm run emulate -- --port 10420 --label "Grayson's bar"
+# then set "bar": { "addr": "http://127.0.0.1:10420" } in your config and `busybuddy run`
+```
+
+The emulator approximates fonts and scrolling (it's for seeing layout, color,
+the live countdown, and LED alerts — not a pixel-perfect replica), and it can
+even run as your partner's stand-in "bar" if you only own one device.
+
+> **Note on the LED alert:** the notification-LED blink is sent via the draw
+> request's `led_notification_color`. The official `@busy-app/busy-lib` client
+> (v0.17.0) drops that field, so BusyBuddy talks to the device over its HTTP API
+> directly (`src/device.ts`) to preserve it. The emulator honors it too.
 
 ## Controlling your status
 
@@ -136,6 +170,9 @@ npm test         # run the test suite (vitest)
 npm run test:watch
 npm run typecheck
 npm run dev -- run --dry-run   # run from source without building
+npm run demo                   # scripted end-to-end scene (text), no hardware
+npm run demo:visual            # two browser emulators + full stack, looping scene
+npm run emulate -- --port 10420  # a single browser emulator
 ```
 
 ### Layout
@@ -150,7 +187,9 @@ npm run dev -- run --dry-run   # run from source without building
 | `src/sync/hub.ts` | Pure room/routing logic |
 | `src/sync/server.ts` | WebSocket relay adapter |
 | `src/sync/client.ts` | Reconnecting client with presence tracking |
-| `src/bar.ts` | Device adapter (`busy-lib`) + mock/dry-run |
+| `src/device.ts` | Direct BUSY Bar HTTP client (sends `led_notification_color`) |
+| `src/bar.ts` | Device adapter + mock/dry-run |
+| `src/emulator/` | Browser emulator: device API server + canvas viewer |
 | `src/app.ts` | Orchestrator wiring state → render → sync |
 | `src/cli.ts` | `serve` / `run` / `set` / `pomodoro` / `status` |
 

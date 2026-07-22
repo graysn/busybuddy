@@ -1,5 +1,6 @@
-import { BusyBar, type DisplayDrawParams } from '@busy-app/busy-lib';
+import type { DisplayDrawParams } from '@busy-app/busy-lib';
 import type { Config } from './config.js';
+import { DeviceClient } from './device.js';
 
 /**
  * Bar adapter. The app only depends on this small interface, so it can run
@@ -12,25 +13,25 @@ export interface BarDisplay {
   describe(): string;
 }
 
-/** Real device, backed by the official @busy-app/busy-lib HTTP client. */
-export class BusyLibBar implements BarDisplay {
-  private readonly bar: BusyBar;
+/** Real device (or emulator), spoken over the BUSY Bar HTTP API directly. */
+export class DeviceBar implements BarDisplay {
+  private readonly client: DeviceClient;
 
   constructor(private readonly cfg: Config['bar']) {
-    this.bar = new BusyBar({
+    this.client = new DeviceClient({
       addr: cfg.addr,
       token: cfg.token,
-      HTTPAccessPassword: cfg.httpAccessPassword,
+      httpAccessPassword: cfg.httpAccessPassword,
       timeout: cfg.timeout,
     });
   }
 
   async draw(params: DisplayDrawParams): Promise<void> {
-    await this.bar.DisplayDraw(params);
+    await this.client.draw(params);
   }
 
   async clear(): Promise<void> {
-    await this.bar.DisplayClear({ application_name: 'busybuddy' });
+    await this.client.clear('busybuddy');
   }
 
   describe(): string {
@@ -80,5 +81,5 @@ export class MockBar implements BarDisplay {
 }
 
 export function createBar(cfg: Config, dryRun: boolean, log: (line: string) => void): BarDisplay {
-  return dryRun ? new MockBar(log) : new BusyLibBar(cfg.bar);
+  return dryRun ? new MockBar(log) : new DeviceBar(cfg.bar);
 }
