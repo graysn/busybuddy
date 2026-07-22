@@ -122,6 +122,14 @@ export class DeviceClient {
     );
   }
 
+  /** GET an arbitrary device path (relative to the /api base), parsed as JSON. */
+  async get(path: string): Promise<unknown> {
+    const res = await this.request(() =>
+      fetch(`${this.baseUrl}${path}`, { headers: this.authHeaders(), signal: this.signal() }),
+    );
+    return this.parse(res);
+  }
+
   /** DELETE /display/draw?application_name=... */
   async clear(applicationName: string): Promise<void> {
     const qs = new URLSearchParams({ application_name: applicationName }).toString();

@@ -105,7 +105,34 @@ the live countdown, and LED alerts, not a pixel-perfect replica.
 > (v0.17.0) drops that field, so BusyBuddy talks to the device over its HTTP API
 > directly (`src/device.ts`) to preserve it. The emulator honors it too.
 
-## Controlling your status
+## Drive it from the bar's own controls (watch mode)
+
+Instead of changing your status from the terminal, you can let BusyBuddy follow
+the **physical controls on the bar**. In watch mode it polls the device
+(`GET /api/busy/snapshot`), reads the status card/theme you selected and any
+running BUSY/CUSTOM session, turns that into your status, and syncs it to your
+partner — while keeping the split screen on top so you still see them.
+
+```bash
+busybuddy run --config me.json --watch
+# or set "watch": true inside "bar" in your config
+```
+
+- The theme you pick on the device (e.g. `on_call`, `on_air`, `focus`) becomes
+  your status. Built-in themes are mapped to sensible labels/colors; map or
+  rename any theme with `themeStatuses` in your config:
+  ```json
+  "themeStatuses": [
+    { "id": "on_air", "label": "Recording", "color": "#DC2626FF", "alert": true }
+  ]
+  ```
+- A BUSY/CUSTOM session running on the bar shows as a live countdown on both
+  bars. (In watch mode the bar is the source of truth, so the built-in Pomodoro
+  and the terminal/keyboard status controls are ignored for your side.)
+- BusyBuddy raises its draw priority in watch mode so the split view stays
+  visible over the device's own session screen.
+
+## Controlling your status (terminal / manual mode)
 
 While `busybuddy run` is active you can drive it from the same terminal
 (keyboard) or from any other terminal (the `set` / `pomodoro` commands talk to
@@ -202,6 +229,7 @@ npm run emulate -- --port 10420  # a single browser emulator
 | `src/sync/server.ts` | WebSocket relay adapter |
 | `src/sync/client.ts` | Reconnecting client with presence tracking |
 | `src/device.ts` | Direct BUSY Bar HTTP client (sends `led_notification_color`) |
+| `src/deviceStatus.ts` | Watch mode: read on-device theme/session → status |
 | `src/bar.ts` | Device adapter + mock/dry-run |
 | `src/emulator/` | Browser emulator: device API server + canvas viewer |
 | `src/playground/` | Interactive two-bar test panel (server + control page) |

@@ -5,6 +5,8 @@ import { StatusCatalog } from './statuses.js';
 import { Pomodoro, phaseLabel, type PomodoroSnapshot } from './pomodoro.js';
 import { SyncClient } from './sync/client.js';
 import { composeFrame } from './render.js';
+import { DeviceClient } from './device.js';
+import { DeviceStatusWatcher, buildStateFromDevice, type DeviceStatus } from './deviceStatus.js';
 
 export interface AppSnapshot {
   me: { name: string; state: StatusState };
@@ -30,6 +32,10 @@ export class App {
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private redrawTimer: ReturnType<typeof setInterval> | null = null;
   private drawing = false;
+  private readonly watchEnabled: boolean;
+  private watcher: DeviceStatusWatcher | null = null;
+  private deviceStatus: DeviceStatus | null = null;
+  private readonly drawPriority: number;
 
   constructor(
     private readonly cfg: Config,
@@ -49,6 +55,9 @@ export class App {
       autoContinue: cfg.pomodoro.autoContinue,
     });
     this.baseStatusId = cfg.initialStatusId;
+    this.watchEnabled = cfg.bar.watch;
+    // In watch mode, stay on top of the device's own session UI (priority ~90).
+    this.drawPriority = this.watchEnabled ? Math.max(cfg.bar.priority, 95) : cfg.bar.priority;
     this.myState = this.computeMyState(this.now());
     this.partner = { peerId: null, name: cfg.partnerName, presence: 'offline', state: null };
 
@@ -73,6 +82,11 @@ export class App {
 
   /** Fold the current Pomodoro phase into a StatusState. */
   private computeMyState(now: number): StatusState {
+    // Watch mode: the physical bar is the source of truth for my status.
+    if (this.watchEnabled) {
+      if (this.deviceStatus) return buildStateFromDevice(this.deviceStatus, now, this.cfg.themeStatuses);
+      return this.catalog.toState(this.baseStatusId, now);
+    }
     const snap = this.pomodoro.snapshot(now);
     if (snap.phase === 'idle') {
       return this.catalog.toState(this.baseStatusId, now);
@@ -93,8 +107,32 @@ export class App {
   async start(): Promise<void> {
     this.myState = this.computeMyState(this.now());
     this.sync.start(this.myState);
+
+    if (this.watchEnabled) {
+      const client = new DeviceClient({
+        addr: this.cfg.bar.addr,
+        token: this.cfg.bar.token,
+        httpAccessPassword: this.cfg.bar.httpAccessPassword,
+        timeout: this.cfg.bar.timeout,
+      });
+      this.watcher = new DeviceStatusWatcher(
+        client,
+        (status) => {
+          this.deviceStatus = status;
+          this.log(`[watch] bar → ${status.theme}${status.sessionActive ? ' (session)' : ''}`);
+          this.broadcast(this.now());
+        },
+        {
+          intervalMs: this.cfg.bar.watchIntervalMs,
+          onError: (err) => this.log(`[watch] poll failed: ${err.message}`),
+        },
+      );
+      this.watcher.start();
+      this.log(`[app] watching on-device controls on ${this.cfg.bar.addr}`);
+    }
+
     await this.redraw();
-    // Advance the Pomodoro across phase boundaries.
+    // Advance the Pomodoro across phase boundaries (no-op in watch mode).
     this.pollTimer = setInterval(() => this.tick(), 1000);
     // Periodically refresh the device so elements survive reconnects/timeouts.
     this.redrawTimer = setInterval(() => void this.redraw(), 30_000);
@@ -106,6 +144,7 @@ export class App {
     if (this.redrawTimer) clearInterval(this.redrawTimer);
     this.pollTimer = null;
     this.redrawTimer = null;
+    this.watcher?.stop();
     this.sync.stop();
     try {
       await this.bar.clear();
@@ -137,7 +176,7 @@ export class App {
         me: { name: this.cfg.name, state: this.myState },
         partner: this.partner,
         now: this.now(),
-        options: { backgroundDim: this.cfg.render.backgroundDim, priority: this.cfg.bar.priority },
+        options: { backgroundDim: this.cfg.render.backgroundDim, priority: this.drawPriority },
       });
       await this.bar.draw(frame);
     } catch (err) {

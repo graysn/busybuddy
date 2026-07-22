@@ -34,6 +34,10 @@ export class EmulatorServer {
   private server: Server | null = null;
   private frame: Frame = { elements: [], led: null, generation: 0 };
   private readonly label: string;
+  private busySnapshot: unknown = {
+    snapshot: { type: 'NOT_STARTED', busy_bar_settings: { theme: 'available' } },
+    snapshot_timestamp_ms: 0,
+  };
 
   constructor(private readonly options: EmulatorOptions) {
     this.label = options.label ?? 'BUSY Bar';
@@ -42,6 +46,11 @@ export class EmulatorServer {
   /** The most recent frame — handy for tests. */
   currentFrame(): Frame {
     return this.frame;
+  }
+
+  /** Set the value returned by /api/busy/snapshot (simulates on-device controls). */
+  setBusySnapshot(snapshot: unknown): void {
+    this.busySnapshot = snapshot;
   }
 
   private json(res: import('node:http').ServerResponse, code: number, body: unknown): void {
@@ -62,7 +71,10 @@ export class EmulatorServer {
           return this.json(res, 200, { api_semver: '1.0.0', firmware_semver: '1.0.0-emulator' });
         }
         if (method === 'GET' && path === '/api/status/system') {
-          return this.json(res, 200, { uptime: 0, charge: 100, model: 'emulator' });
+          return this.json(res, 200, { api_semver: '1.0.0', uptime: 0, charge: 100, model: 'emulator' });
+        }
+        if (method === 'GET' && path === '/api/busy/snapshot') {
+          return this.json(res, 200, this.busySnapshot);
         }
         if (method === 'POST' && path === '/api/display/draw') {
           let data = '';

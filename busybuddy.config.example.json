@@ -6,7 +6,9 @@
   "bar": {
     "addr": "10.0.4.20",
     "timeout": 3000,
-    "priority": 60
+    "priority": 60,
+    "watch": false,
+    "watchIntervalMs": 1500
   },
 
   "sync": {
@@ -27,6 +29,11 @@
   "customStatuses": [
     { "id": "recording", "label": "Recording", "color": "#DC2626FF", "alert": true },
     { "id": "school", "label": "Homework", "color": "#8B5CF6FF" }
+  ],
+
+  "themeStatuses": [
+    { "id": "on_call", "label": "On a call", "color": "#EF4444FF", "alert": true },
+    { "id": "on_air", "label": "Recording", "color": "#DC2626FF", "alert": true }
   ],
 
   "controlPort": 8788,
