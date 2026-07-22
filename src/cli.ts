@@ -3,6 +3,7 @@ import { loadConfig } from './config.js';
 import { App } from './app.js';
 import { createBar } from './bar.js';
 import { SyncServer } from './sync/server.js';
+import { EmulatorServer } from './emulator/server.js';
 import { startControlServer, controlRequest } from './control.js';
 
 /** Minimal flag parser: returns { _: positionals, ...flags } with string/boolean values. */
@@ -40,6 +41,7 @@ const HELP = `busybuddy — sync two BUSY Bars so you and your partner see each 
 
 Usage:
   busybuddy serve [--port 8787] [--host 0.0.0.0]   Run the sync relay
+  busybuddy emulate [--port 10420] [--label name]  Run a browser BUSY Bar emulator
   busybuddy run [--config path] [--dry-run]        Run your bar agent (long-running)
   busybuddy set <status-id> [--port]               Change your status
   busybuddy pomodoro <start|pause|resume|stop|skip> [--port]
@@ -64,6 +66,19 @@ async function cmdServe(flags: Record<string, string | boolean>): Promise<void> 
     console.log('\n[relay] shutting down');
     void server.stop().then(() => process.exit(0));
   };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
+async function cmdEmulate(flags: Record<string, string | boolean>): Promise<void> {
+  const port = typeof flags.port === 'string' ? Number(flags.port) : 10420;
+  const label = typeof flags.label === 'string' ? flags.label : 'BUSY Bar (emulator)';
+  const server = new EmulatorServer({ port, host: '127.0.0.1', label });
+  const { url } = await server.start();
+  console.log(`[emulator] "${label}" running`);
+  console.log(`[emulator] open ${url} in your browser to see the screen`);
+  console.log(`[emulator] point an agent at it with  bar.addr = "${url}"`);
+  const shutdown = () => void server.stop().then(() => process.exit(0));
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 }
@@ -183,6 +198,8 @@ async function main(): Promise<void> {
     switch (command) {
       case 'serve':
         return await cmdServe(flags);
+      case 'emulate':
+        return await cmdEmulate(flags);
       case 'run':
         return await cmdRun(flags);
       case 'set':
