@@ -64,28 +64,41 @@ plays out a short scene (recording, Pomodoro, meeting, LED alerts):
 npm run demo
 ```
 
-## Emulator (no hardware)
+## Playground — test it interactively (no hardware)
 
-Don't have two bars — or any bar? Run the built-in emulator, a local server that
-speaks the real BUSY Bar HTTP API and renders the 72×16 screen in your browser.
-Point an agent's `bar.addr` at it exactly like a physical device.
-
-```bash
-# one command spins up two emulators + relay + two agents and loops a scene:
-npm run demo:visual
-# → open the two printed URLs (http://127.0.0.1:10420 and :10421) side by side
-```
-
-Or run an emulator on its own and drive it like real hardware:
+The fastest way to actually *try* BusyBuddy and see what works: one command
+starts the whole stack (relay + two bar emulators + two agents) and opens a
+browser control panel where **you drive both sides yourself** and watch both
+bars react live. Nothing scripted.
 
 ```bash
-npm run emulate -- --port 10420 --label "Grayson's bar"
-# then set "bar": { "addr": "http://127.0.0.1:10420" } in your config and `busybuddy run`
+npm run playground
+# → open http://127.0.0.1:8080
+# optional names:  npm run playground -- --you Grayson --partner Erik
 ```
 
-The emulator approximates fonts and scrolling (it's for seeing layout, color,
-the live countdown, and LED alerts — not a pixel-perfect replica), and it can
-even run as your partner's stand-in "bar" if you only own one device.
+Each panel is one person's bar (their status on the left card, their partner on
+the right). Click a status or a Pomodoro control on either side and both
+previews update, along with a plain-text readout of each person's status,
+timer, and whether they can see their partner.
+
+## Emulator (single screen / real hardware stand-in)
+
+Under the playground is a reusable emulator: a local server that speaks the real
+BUSY Bar HTTP API and renders the 72×16 screen in your browser. Point an agent's
+`bar.addr` at it exactly like a physical device — handy if you own **one** bar
+and want an emulated partner:
+
+```bash
+npm run emulate -- --port 10420 --label "Partner's bar"
+# then set "bar": { "addr": "http://127.0.0.1:10420" } in a config and `busybuddy run`
+```
+
+There's also a scripted two-bar loop if you just want a quick look:
+`npm run demo:visual` (opens two emulator URLs and plays a fixed scene).
+
+The emulator approximates fonts and scrolling — it's for reading layout, color,
+the live countdown, and LED alerts, not a pixel-perfect replica.
 
 > **Note on the LED alert:** the notification-LED blink is sent via the draw
 > request's `led_notification_color`. The official `@busy-app/busy-lib` client
@@ -170,6 +183,7 @@ npm test         # run the test suite (vitest)
 npm run test:watch
 npm run typecheck
 npm run dev -- run --dry-run   # run from source without building
+npm run playground             # interactive two-bar test panel in the browser
 npm run demo                   # scripted end-to-end scene (text), no hardware
 npm run demo:visual            # two browser emulators + full stack, looping scene
 npm run emulate -- --port 10420  # a single browser emulator
@@ -190,6 +204,7 @@ npm run emulate -- --port 10420  # a single browser emulator
 | `src/device.ts` | Direct BUSY Bar HTTP client (sends `led_notification_color`) |
 | `src/bar.ts` | Device adapter + mock/dry-run |
 | `src/emulator/` | Browser emulator: device API server + canvas viewer |
+| `src/playground/` | Interactive two-bar test panel (server + control page) |
 | `src/app.ts` | Orchestrator wiring state → render → sync |
 | `src/cli.ts` | `serve` / `run` / `set` / `pomodoro` / `status` |
 
