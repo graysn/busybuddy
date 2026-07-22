@@ -30,9 +30,17 @@ const barSchema = z.object({
   /**
    * Draw priority [1,100]. Built-in apps draw at 10 and an active BUSY/CUSTOM
    * work session at 90; the default 60 keeps BusyBuddy above ordinary apps
-   * while still yielding to a manually started work session.
+   * while still yielding to a manually started work session. In watch mode the
+   * priority is automatically raised to stay on top of on-device sessions.
    */
   priority: z.number().int().min(1).max(100).default(60),
+  /**
+   * Watch mode: derive your status from the physical controls on the bar
+   * (its selected theme + running session) instead of the terminal/keyboard.
+   */
+  watch: z.boolean().default(false),
+  /** How often to poll the device for on-device status changes (ms). */
+  watchIntervalMs: z.number().int().positive().default(1500),
 });
 
 const syncSchema = z.object({
@@ -68,6 +76,11 @@ export const configSchema = z.object({
   pomodoro: pomodoroSchema.default({}),
   /** Extra/override status definitions. */
   customStatuses: z.array(statusDefSchema).default([]),
+  /**
+   * Map device themes (watch mode) to a label/color. `id` is the device theme
+   * string (e.g. "on_call"); overrides or extends the built-in theme map.
+   */
+  themeStatuses: z.array(statusDefSchema).default([]),
   /** Local control API port (`busybuddy set`/`pomodoro` talk to this). */
   controlPort: z.number().int().positive().default(8788),
   render: z

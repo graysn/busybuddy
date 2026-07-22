@@ -44,7 +44,8 @@ Usage:
   busybuddy serve [--port 8787] [--host 0.0.0.0]   Run the sync relay
   busybuddy emulate [--port 10420] [--label name]  Run a browser BUSY Bar emulator
   busybuddy playground [--port 8080]               Interactive two-bar test panel in your browser
-  busybuddy run [--config path] [--dry-run]        Run your bar agent (long-running)
+  busybuddy run [--config path] [--dry-run] [--watch]  Run your bar agent (long-running)
+                                                   (--watch: drive status from the bar's own controls)
   busybuddy set <status-id> [--port]               Change your status
   busybuddy pomodoro <start|pause|resume|stop|skip> [--port]
   busybuddy status [--port]                        Show current snapshot
@@ -100,6 +101,7 @@ async function cmdPlayground(flags: Record<string, string | boolean>): Promise<v
 
 async function cmdRun(flags: Record<string, string | boolean>): Promise<void> {
   const cfg = loadConfig(typeof flags.config === 'string' ? flags.config : undefined);
+  if (flags.watch === true) cfg.bar.watch = true;
   const dryRun = flags['dry-run'] === true;
   const bar = createBar(cfg, dryRun, (l) => console.log(l));
   const app = new App(cfg, bar, (l) => console.log(l));
