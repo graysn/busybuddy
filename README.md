@@ -56,7 +56,13 @@ busybuddy run
 ```
 
 Try it **without a device** first — `busybuddy run --dry-run` prints an ASCII
-preview of the two cards instead of drawing to hardware.
+preview of the two cards instead of drawing to hardware. Even quicker, run the
+built-in demo, which starts a relay and two dry-run agents in one process and
+plays out a short scene (recording, Pomodoro, meeting, LED alerts):
+
+```bash
+npm run demo
+```
 
 ## Controlling your status
 
@@ -136,6 +142,7 @@ npm test         # run the test suite (vitest)
 npm run test:watch
 npm run typecheck
 npm run dev -- run --dry-run   # run from source without building
+npm run demo                   # scripted end-to-end scene, no hardware
 ```
 
 ### Layout
