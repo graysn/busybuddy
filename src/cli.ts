@@ -4,6 +4,7 @@ import { App } from './app.js';
 import { createBar } from './bar.js';
 import { SyncServer } from './sync/server.js';
 import { EmulatorServer } from './emulator/server.js';
+import { Playground } from './playground/server.js';
 import { startControlServer, controlRequest } from './control.js';
 
 /** Minimal flag parser: returns { _: positionals, ...flags } with string/boolean values. */
@@ -42,6 +43,7 @@ const HELP = `busybuddy — sync two BUSY Bars so you and your partner see each 
 Usage:
   busybuddy serve [--port 8787] [--host 0.0.0.0]   Run the sync relay
   busybuddy emulate [--port 10420] [--label name]  Run a browser BUSY Bar emulator
+  busybuddy playground [--port 8080]               Interactive two-bar test panel in your browser
   busybuddy run [--config path] [--dry-run]        Run your bar agent (long-running)
   busybuddy set <status-id> [--port]               Change your status
   busybuddy pomodoro <start|pause|resume|stop|skip> [--port]
@@ -79,6 +81,19 @@ async function cmdEmulate(flags: Record<string, string | boolean>): Promise<void
   console.log(`[emulator] open ${url} in your browser to see the screen`);
   console.log(`[emulator] point an agent at it with  bar.addr = "${url}"`);
   const shutdown = () => void server.stop().then(() => process.exit(0));
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
+async function cmdPlayground(flags: Record<string, string | boolean>): Promise<void> {
+  const port = typeof flags.port === 'string' ? Number(flags.port) : 8080;
+  const youName = typeof flags.you === 'string' ? flags.you : 'You';
+  const partnerName = typeof flags.partner === 'string' ? flags.partner : 'Partner';
+  const pg = new Playground({ port, youName, partnerName });
+  const { url } = await pg.start();
+  console.log(`[playground] open ${url} in your browser`);
+  console.log('[playground] drive either bar and watch both react. Ctrl+C to stop.');
+  const shutdown = () => void pg.stop().then(() => process.exit(0));
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 }
@@ -200,6 +215,8 @@ async function main(): Promise<void> {
         return await cmdServe(flags);
       case 'emulate':
         return await cmdEmulate(flags);
+      case 'playground':
+        return await cmdPlayground(flags);
       case 'run':
         return await cmdRun(flags);
       case 'set':
