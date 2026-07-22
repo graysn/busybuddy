@@ -1,0 +1,40 @@
+{
+  "name": "busybuddy",
+  "version": "0.1.0",
+  "description": "Sync two BUSY Bars so you and your partner can see each other's status side-by-side, with Pomodoro and custom statuses.",
+  "type": "module",
+  "bin": {
+    "busybuddy": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "busybuddy.config.example.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "serve": "tsx src/cli.ts serve",
+    "run:agent": "tsx src/cli.ts run",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@busy-app/busy-lib": "^0.17.0",
+    "ws": "^8.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Grayson",
+  "partnerName": "Partner",
+  "initialStatusId": "available",
+
+  "bar": {
+    "addr": "10.0.4.20",
+    "timeout": 3000,
+    "priority": 60
+  },
+
+  "sync": {
+    "url": "ws://192.168.1.50:8787",
+    "room": "our-secret-room-code"
+  },
+
+  "pomodoro": {
+    "focusMin": 25,
+    "breakMin": 5,
+    "longBreakMin": 15,
+    "cyclesBeforeLongBreak": 4,
+    "focusStatusId": "focus",
+    "breakStatusId": "brb",
+    "autoContinue": true
+  },
+
+  "customStatuses": [
+    { "id": "recording", "label": "Recording", "color": "#DC2626FF", "alert": true },
+    { "id": "school", "label": "Homework", "color": "#8B5CF6FF" }
+  ],
+
+  "controlPort": 8788,
+
+  "render": {
+    "backgroundDim": 0.5,
+    "partnerStaleAfterSec": 45
+  }
+}
